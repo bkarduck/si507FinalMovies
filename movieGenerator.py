@@ -84,9 +84,9 @@ def getAPIData(movieList):
         overallMovie.append(movieInfoDict)
     return overallMovie
     
-filename = 'apiData.csv'
-def apiCSVWriter(filename, overallMovie):
-    with open(filename, 'w', newline='') as f:
+
+def apiCSVWriter(overallMovie):
+    with open('apiData.csv', 'w', newline='') as f:
         w = csv.DictWriter(f,['Title','Year', 'Rated','Runtime','Genre','Director','Plot','rottenTomatoes','imdbRating','Metascore', 'BoxOffice', 'imdbVotes','criticConsensus','Rank'])
         w.writeheader()
         for movie in overallMovie:
@@ -121,7 +121,7 @@ if len(overallMovieList) == 0:
         scrapingData = rottenTomatoScrape()
         scrapingCSVWriter(scrapingData)
     overallMovieList = getAPIData(scrapingData)
-    apiCSVWriter('apiData.csv', overallMovieList)
+    apiCSVWriter(overallMovieList)
 #print(overallMovieList)
 
 
@@ -213,7 +213,7 @@ def playLeaf(tree):
 
 def createRatingTree(movieList):
     
-    text = "Do you want to watch something family friendly?"
+    text = "Do you want to watch something family friendly (yes/no)?"
     left, right = splitByRatings(movieList)
     
     firstLayerTree = text, left, right
@@ -221,19 +221,17 @@ def createRatingTree(movieList):
 
 def createTimeTree(firstTree):
     text, left, right = firstTree
-    newQuestion = "Do you want to watch over 100 min?"
+    newQuestion = "Do you want to watch something over 100 min (yes/no)?"
     
     leftT, rightT = splitByTime(text)
-    leftTree = newQuestion, leftT, rightT
-    leftT, rightT = splitByTime(text)
-    rightTree = newQuestion, leftT, rightT
+    
 
     secondLayerTree = newQuestion, leftT, rightT
     return secondLayerTree
 
 def createReleaseDateTree(secondTree):
     text, left, right = secondTree
-    newQuestion = "Do you want to watch a movie that is over 15 years old?"
+    newQuestion = "Do you want to watch a movie that is over 15 years old (yes/no)?"
     
     leftT, rightT = splitByReleaseDate(left[0])
     leftTree = newQuestion, leftT, rightT
