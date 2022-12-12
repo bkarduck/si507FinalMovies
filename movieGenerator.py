@@ -2,6 +2,10 @@ from bs4 import BeautifulSoup
 import requests
 import csv
 import json
+import random
+import urllib.request
+from PIL import Image
+import matplotlib.pyplot as plt
 
 url = "https://editorial.rottentomatoes.com/guide/best-disney-movies-to-watch-now/"
 resp = requests.get(url)
@@ -54,7 +58,7 @@ overallMovie = []
 def getAPIData(movieList):
     for movie in movieList:
         movieInfoDict = {}
-        parameter_dictionary = {'t': movie['Title'], 'apikey': "5828b360"}
+        parameter_dictionary = {'t': movie['Title'],'plot': 'full', 'apikey': "5828b360"}
     
         response = requests.get(baseurl, parameter_dictionary)
         response_json = response.json()
@@ -81,13 +85,14 @@ def getAPIData(movieList):
         movieInfoDict['imdbVotes'] = response_json['imdbVotes']
         movieInfoDict['criticConsensus'] = movie['criticConsensus']
         movieInfoDict['Rank'] = movie['Rank']
+        movieInfoDict['Poster'] = response_json['Poster']
         overallMovie.append(movieInfoDict)
     return overallMovie
     
 
 def apiCSVWriter(overallMovie):
     with open('apiData.csv', 'w', newline='') as f:
-        w = csv.DictWriter(f,['Title','Year', 'Rated','Runtime','Genre','Director','Plot','rottenTomatoes','imdbRating','Metascore', 'BoxOffice', 'imdbVotes','criticConsensus','Rank'])
+        w = csv.DictWriter(f,['Title','Year', 'Rated','Runtime','Genre','Director','Plot','rottenTomatoes','imdbRating','Metascore', 'BoxOffice', 'imdbVotes','criticConsensus','Rank', 'Poster'])
         w.writeheader()
         for movie in overallMovie:
             w.writerow(movie)
@@ -108,7 +113,6 @@ def open_cache(filename):
         with open(filename, mode='r') as csv_file:
             csv_reader = csv.DictReader(csv_file)
             movieList = list(csv_reader)
-        #cache_dict = json.loads(cache_contents)
         
     except:
         movieList = []
@@ -122,16 +126,16 @@ if len(overallMovieList) == 0:
         scrapingCSVWriter(scrapingData)
     overallMovieList = getAPIData(scrapingData)
     apiCSVWriter(overallMovieList)
-#print(overallMovieList)
 
 
 
-def save_cache(cache_dict, filename):
-    ''' saves the current state of the cache to disk
+
+def saveTree(cache_dict, filename):
+    ''' saves the tree as a json file
     Parameters
     ----------
-    cache_dict: dict
-        The dictionary to save
+    tree: dict
+        The dictionary (tree) to save
     Returns
     -------
     None
@@ -140,13 +144,6 @@ def save_cache(cache_dict, filename):
     fw = open(filename,"w")
     fw.write(dumped_json_cache)
     fw.close() 
-
-
-
-# Do you want to watch a family friendly movie (G/PG)
-# Do you want to watch a movie that's over 100 minutes
-# Do you want to watch something more than 15 years old? Before 2008
-# What Genre are you interested in?
 
 def simplePlay(tree):
     
@@ -165,7 +162,6 @@ def simplePlay(tree):
     text, left, right = tree
     if isLeaf(tree):
         return text
-        #return playLeaf(tree)
     else:
         confirmQuestion = input(f'{text} (yes/no) ')
         if confirmQuestion == 'yes':
@@ -279,35 +275,210 @@ def splitByReleaseDate(movieList):
     left = (leftList, None, None)
     right = (rightList, None, None)
     return left, right
-    
 
-
-listy = [{'Ratings': 'G', 'Runtime': 90, 'releaseYear': 2005},
-{'Ratings': 'G', 'Runtime': 90, 'releaseYear': 2015},
-{'Ratings': 'PG', 'Runtime': 120, 'releaseYear': 2015},
-{'Ratings': 'PG-13', 'Runtime': 90, 'releaseYear': 2005},
-{'Ratings': 'R', 'Runtime': 100, 'releaseYear': 2003},
-{'Ratings': 'G', 'Runtime': 130, 'releaseYear': 2005},
-{'Ratings': 'PG', 'Runtime': 90, 'releaseYear': 2018},
-{'Ratings': 'R', 'Runtime': 120, 'releaseYear': 2020},
-{'Ratings': 'R', 'Runtime': 130, 'releaseYear': 2015},
-{'Ratings': 'PG-13', 'Runtime': 140, 'releaseYear': 2017},
-{'Ratings': 'R', 'Runtime': 90, 'releaseYear': 2005}
-
-]
 
 tree1 = createRatingTree(overallMovieList)
 text, left, right = tree1
 treeL = createTimeTree(left)
 treeR = createTimeTree(right)
-t2, l2, r2 = treeL
 tree2 = tree1[0], createTimeTree(left), createTimeTree(right)
 treeL2 = createReleaseDateTree(treeL)
 treeR2 = createReleaseDateTree(treeR)
 tree3 = text, treeL2, treeR2
-#print(tree3)
-y = simplePlay(tree3)
-print(len(y))
+
+treeFile = "savedTree.json"
+saveTree(tree3, treeFile)
+
+numOfQuestions = input("How specific do you want your prediction to be? Enter 1 to answer 1 question, 2 to answer 2 questions, and 3 to answer 3 questions to narrow down your selection ")
+
+if numOfQuestions == "1":
+    treeToPlay = tree1
+elif numOfQuestions == "2":
+    treeToPlay = tree2
+elif numOfQuestions == "3":
+    treeToPlay = tree3
+
+
+playTree = simplePlay(treeToPlay)
+
+def graphPoster(selectedMovie):
+    urllib.request.urlretrieve(selectedMovie['Poster'], 'movie.png')
+  
+    img = Image.open("movie.png")
+    f, a0 = plt.subplots(1, 1)
+    plt.suptitle(f'Your movie is: {selectedMovie["Title"]}', y=.96, weight='bold')
+    f.set_figheight(6)
+    f.set_figwidth(8)
+    a0.imshow(img, zorder=1)
+    a0.yaxis.set_visible(False)
+    a0.tick_params(left = False, right = False , labelleft = False ,
+                labelbottom = False, bottom = False)
+    plt.show()
+
+def graphMovieRatings(selectedMovie):
+
+    if '%' in selectedMovie["rottenTomatoes"]:
+        rottenTom = float(selectedMovie["rottenTomatoes"].split('%')[0])
+    elif '/' in selectedMovie['rottenTomatoes']:
+        rottenTom = float(selectedMovie["rottenTomatoes"].split('/')[0])
+    imdbRating = float(selectedMovie['imdbRating']) * 10
+    metascore = float(selectedMovie['Metascore'])
+    averageScore = (rottenTom + imdbRating + metascore) / 3
+
+    xAxis = ['Rotten Tomatoes', 'IMDB', 'Metascore', 'Average Rating']
+    yAxis = [rottenTom, imdbRating, metascore, averageScore]
+    colors = ['firebrick', 'goldenrod', 'green', 'slategrey']
+    f, a0 = plt.subplots(1, 1)
+    plt.suptitle(f'Your movie is: {selectedMovie["Title"]}', y=.96, weight='bold')
+    f.set_figheight(6)
+    f.set_figwidth(8)
+    bars = a0.bar(xAxis, yAxis, color = colors)
+    a0.set_title(f'Ratings')
+    a0.set_ylabel('Ratings out of 100')
+    a0.set_xlabel('Rating Platform')
+    a0.set_ybound(0, 100)
+    a0.bar_label(bars)
+    plt.show()
+
+def graphBoxDescription(selectedMovie):
+    f, a0 = plt.subplots(1, 1)
+    plt.suptitle(f'Your movie is: {selectedMovie["Title"]}', y=.96, weight='bold')
+    f.set_figheight(6)
+    f.set_figwidth(8)
+    a0.axis('off')
+    txt = a0.text(0.5, 0.98, f'Rating: {selectedMovie["Rated"]}  ||  Runtime: {selectedMovie["Runtime"]} minutes. \n\nPlot: {selectedMovie["Plot"]} \n\nCritic Consensus: {selectedMovie["criticConsensus"]}', fontsize=10, transform=a0.transAxes, horizontalalignment='center',
+        verticalalignment='top', wrap = True, bbox=dict(facecolor='lavender', alpha=0.4))
+    a0.set_title(f'Description', loc='center')
+    txt._get_wrap_line_width = lambda : 900.
+    plt.show()
+   
+def graphAllMovieDetails(selectedMovie):
+    urllib.request.urlretrieve(selectedMovie['Poster'], 'movie.png')
+  
+    img = Image.open("movie.png")
+
+    if '%' in selectedMovie["rottenTomatoes"]:
+        rottenTom = float(selectedMovie["rottenTomatoes"].split('%')[0])
+    elif '/' in selectedMovie['rottenTomatoes']:
+        rottenTom = float(selectedMovie["rottenTomatoes"].split('/')[0])
+    imdbRating = float(selectedMovie['imdbRating']) * 10
+    metascore = float(selectedMovie['Metascore'])
+    averageScore = (rottenTom + imdbRating + metascore) / 3
+
+    xAxis = ['Rotten Tomatoes', 'IMDB', 'Metascore', 'Average Rating']
+    yAxis = [rottenTom, imdbRating, metascore, averageScore]
+    colors = ['firebrick', 'goldenrod', 'green', 'slategrey']
+    
+    f, (a0, a1, a2) = plt.subplots(1, 3, width_ratios=[2, 1, 1.75])
+    plt.subplots_adjust(left=0.08,top=0.9,right=0.92,bottom=0.1)
+    plt.suptitle(f'Your movie is: {selectedMovie["Title"]}', y=.96, weight='bold')
+    f.set_figheight(8)
+    f.set_figwidth(13)
+
+    bars = a0.bar(xAxis, yAxis, color = colors)
+    a0.set_title(f'Ratings')
+    a0.set_ylabel('Ratings out of 100')
+    a0.set_xlabel('Rating Platform')
+    a0.set_ybound(0, 100)
+    a0.bar_label(bars)
+
+    a1.imshow(img, zorder=1)
+    a1.yaxis.set_visible(False)
+    a1.tick_params(left = False, right = False , labelleft = False ,
+                labelbottom = False, bottom = False)
+    a1.set_xlabel(f'Genre(s): {selectedMovie["Genre"]}')
+
+    a2.axis('off')
+    txt = a2.text(0.02, 0.98, f'Rating: {selectedMovie["Rated"]}  ||  Runtime: {selectedMovie["Runtime"]} minutes. \n\nPlot: {selectedMovie["Plot"]} \n\nCritic Consensus: {selectedMovie["criticConsensus"]}', fontsize=10, transform=a2.transAxes, horizontalalignment='left',
+        verticalalignment='top', wrap = True, bbox=dict(facecolor='lavender', alpha=0.4))
+    a2.set_title(f'Description', loc='center')
+    txt._get_wrap_line_width = lambda : 675.
+
+    plt.show()
+
+def graph3Posters(selectedMovies):
+    count = 1
+    for movie in selectedMovies:
+        urllib.request.urlretrieve(movie['Poster'], f'movie{count}.png')
+        count += 1
+    
+    img1 = Image.open("movie1.png")
+    img2 = Image.open("movie2.png")
+    img3 = Image.open("movie3.png")
+    f, (a0, a1, a2) = plt.subplots(1, 3)
+    f.set_figheight(8)
+    f.set_figwidth(13)
+    plt.suptitle(f'Your movies are: {selectedMovies[0]["Title"]}, {selectedMovies[1]["Title"]}, and {selectedMovies[2]["Title"]}', y=.96, weight='bold')
+
+    a0.set_title(f'{selectedMovies[0]["Title"]}')
+    a0.imshow(img1, zorder=1)
+    a0.yaxis.set_visible(False)
+    a0.tick_params(left = False, right = False , labelleft = False ,
+                labelbottom = False, bottom = False)
+
+    a1.set_title(f'{selectedMovies[1]["Title"]}')
+    a1.imshow(img2, zorder=1)
+    a1.yaxis.set_visible(False)
+    a1.tick_params(left = False, right = False , labelleft = False ,
+                labelbottom = False, bottom = False)
+
+    a2.set_title(f'{selectedMovies[2]["Title"]}')
+    a2.imshow(img3, zorder=1)
+    a2.yaxis.set_visible(False)
+    a2.tick_params(left = False, right = False , labelleft = False ,
+                labelbottom = False, bottom = False)
+
+    plt.show()
+
+
+lengthOfOptions = len(playTree)
+randomOrNo = input(f'Do you want to have a movie chosen at random for you from the {lengthOfOptions} options? Enter "yes" if so, otherwise type anything else: ' )
+if randomOrNo == 'yes':
+    postersOrGraph = input('Would you rather see three random movie posters that fit your criteria or see the details about a specific movie? Enter 1 to see three posters and 2 to see information on a singular movie: ')
+    if postersOrGraph == "1":
+        selectedMovies = random.choices(playTree, k=3)
+        graph3Posters(selectedMovies)
+    elif postersOrGraph == "2": 
+
+        selectedMovie = random.choice(playTree)
+        graphAllMovieDetails(selectedMovie)
+else:
+    dictOfTitles = {}
+    count = 1
+    
+    for movie in playTree:
+
+        dictOfTitles[count] = (movie['Title'])
+        count += 1
+    print('The movies that fit your criteria are:')
+    print(dictOfTitles)
+    movieNum = input("Select the number of the movie you want to see more information on (if an eligible number is not selected, a movie will be chosen at random for you): ")
+    outputOption = input("Do you want to see 1. Only the movie poster? 2. Only the movie rating? 3. Only the movie plot and critic review? 4. All three? Enter the number of the option you want (if anything else is entered, the poster, graph of ratings, and description will be displayed): ")
+
+    if int(movieNum) in dictOfTitles.keys():
+        movieNum = int(movieNum) - 1
+    else:
+        movieNum = random.choice(range(0, lengthOfOptions-1))
+    
+    if outputOption == '1':
+        graphPoster(playTree[movieNum])
+
+    elif outputOption == '2':
+        graphMovieRatings(playTree[movieNum])
+
+    elif outputOption == '3':
+        graphBoxDescription(playTree[movieNum])
+
+    else:
+        graphAllMovieDetails(playTree[movieNum])
+    
+
+
+
+
+
+
+
 
 
 ## idea: make a class that stores values per movie and has the functions that split the lists
