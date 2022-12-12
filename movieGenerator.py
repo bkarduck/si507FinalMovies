@@ -47,7 +47,6 @@ def scrapingCSVWriter( movieList):
     f.close()
 #scrapingCSVWriter(filename, rottenTomatoScrape())
 
-API = "http://www.omdbapi.com/?apikey=&126cef76"
 baseurl = "http://www.omdbapi.com/"
 
 
@@ -209,7 +208,7 @@ def playLeaf(tree):
 
 def createRatingTree(movieList):
     
-    text = "Do you want to watch something family friendly (yes/no)?"
+    text = "Do you want to watch something family friendly (yes/no - no also returns films that don't have a rating)?"
     left, right = splitByRatings(movieList)
     
     firstLayerTree = text, left, right
@@ -217,7 +216,7 @@ def createRatingTree(movieList):
 
 def createTimeTree(firstTree):
     text, left, right = firstTree
-    newQuestion = "Do you want to watch something over 100 min (yes/no)?"
+    newQuestion = "Do you want to watch something over 100 minutes (yes/no)?"
     
     leftT, rightT = splitByTime(text)
     
@@ -289,7 +288,7 @@ tree3 = text, treeL2, treeR2
 treeFile = "savedTree.json"
 saveTree(tree3, treeFile)
 
-numOfQuestions = input("How specific do you want your prediction to be? Enter 1 to answer 1 question, 2 to answer 2 questions, and 3 to answer 3 questions to narrow down your selection ")
+numOfQuestions = input("How specific do you want your recommendation to be? Enter 1 to answer 1 question, 2 to answer 2 questions, and 3 to answer 3 questions to narrow down your selection ")
 
 if numOfQuestions == "1":
     treeToPlay = tree1
@@ -453,7 +452,7 @@ else:
     print('The movies that fit your criteria are:')
     print(dictOfTitles)
     movieNum = input("Select the number of the movie you want to see more information on (if an eligible number is not selected, a movie will be chosen at random for you): ")
-    outputOption = input("Do you want to see 1. Only the movie poster? 2. Only the movie rating? 3. Only the movie plot and critic review? 4. All three? Enter the number of the option you want (if anything else is entered, the poster, graph of ratings, and description will be displayed): ")
+    outputOption = input("Do you want to see 1. Only the movie poster? 2. Only the movie rating? 3. Only the movie plot and critic review? 4. A prompt to the command line with all of the information about the movie 5. A combination display of the graph of ratings, poster, and plot/critic consensus Enter the number of the option you want (if anything else is entered, the poster, graph of ratings, and description will be displayed): ")
 
     if int(movieNum) in dictOfTitles.keys():
         movieNum = int(movieNum) - 1
@@ -469,11 +468,15 @@ else:
     elif outputOption == '3':
         graphBoxDescription(playTree[movieNum])
 
+    elif outputOption == '4':
+        print(playTree[movieNum])
     else:
         graphAllMovieDetails(playTree[movieNum])
     
 
-
+# need to do: put everything into a main fuction (if name == __main__: main()), 
+# find the spots where you would get fucked over if you inputted the wrong thing
+# add while loop for checking the movies that were manually chosen out??? Like oh i want to look at the info for a different one
 
 
 
