@@ -20,5 +20,7 @@ def openTree():
     except:
         tree = {}
     return tree
-
-print(openTree())
+savedTree = openTree()
+printOption = input("Do you want to print the tree? (yes/no): ")
+if printOption == "yes":
+    print(savedTree)
