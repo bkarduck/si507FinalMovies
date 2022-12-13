@@ -6,14 +6,14 @@ API Key information: Although this is bad practice, the API key that I generated
 
 # Data Structure Information
 
-I chose to use a tree to help structure my data for building this recommendation system. I made a tree recommendation structure with 3 levels. The tree nodes  consist of lists of the movies that fit the criteria that have been requested by the answers to the following questions.
+I chose to use a tree to help structure my data for building this recommendation system. I made a tree recommendation structure with 3 levels. The tree nodes consist of lists of the movies that fit the criteria that have been requested by the answers to the following questions.
 
 The questions that determine the three layers of the tree are: 
 Do you want to watch something family friendly? (rated G/PG) (yes/no)
 Do you want to watch something over 100 minutes? (yes/no)
 Do you want to watch a movie that is over 15 years old? (yes/no)
 
-Since the questions all are checking unrelated factors and involve running through the list of movies to group them indivually by if they follow the criteria or not, I made the trees non-recursively. If there were more than 3 layers/100 movies, I would definitely try to figure out another strategy for recursively adding the data in. 
+Since the questions all are checking unrelated factors and involve running through the list of movies to group them individually by if they follow the criteria or not, I made the trees non-recursively. If there were more than 3 layers/100 movies, I would definitely try to figure out another strategy for recursively adding the data in. 
 
 # How to run the program 
 

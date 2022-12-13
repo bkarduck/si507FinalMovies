@@ -17,9 +17,6 @@ def rottenTomatoScrape():
         tags = soup.find_all('div', class_='countdown-index')
         tags2 = soup.find_all('div', class_= 'col-sm-24')
         tags3 = soup.find_all('h2')
-        #tags = soup.find_all('h2', class_='c-gallery-vertical-slide__title')
-        #<h2 class="c-gallery-vertical-slide__title">“10 Things I Hate About You” (1999)</h2>
-        # <div class="row countdown-item-details">
                     
                         
         for i in range(len(tags)):
@@ -37,7 +34,6 @@ def rottenTomatoScrape():
     return movieList
 
 
-
 def scrapingCSVWriter( movieList):
     with open('scrapingData.csv', 'w', newline='') as f:
         w = csv.DictWriter(f,['Title','Release Year','criticConsensus','Rank','Director'])
@@ -45,15 +41,11 @@ def scrapingCSVWriter( movieList):
         for movie in movieList:
             w.writerow(movie)
     f.close()
-#scrapingCSVWriter(filename, rottenTomatoScrape())
 
 baseurl = "http://www.omdbapi.com/"
 
-
 overallMovie = []
-# Rated, Runtime, Genre, Plot, Poster, 
-# Ratings (list) -> Internet Movie Database x/10, Rotten Tomatoes x%, Metacritic x/100... 
-# Metascore, imdbRating, imdbVotes, BoxOffice
+
 def getAPIData(movieList):
     for movie in movieList:
         movieInfoDict = {}
@@ -117,17 +109,6 @@ def open_cache(filename):
         movieList = []
     return movieList
 
-overallMovieList = open_cache('apiData.csv')
-if len(overallMovieList) == 0:
-    scrapingData = open_cache('scrapingData.csv')
-    if scrapingData == []:
-        scrapingData = rottenTomatoScrape()
-        scrapingCSVWriter(scrapingData)
-    overallMovieList = getAPIData(scrapingData)
-    apiCSVWriter(overallMovieList)
-
-
-
 
 def saveTree(cache_dict, filename):
     ''' saves the tree as a json file
@@ -162,7 +143,7 @@ def simplePlay(tree):
     if isLeaf(tree):
         return text
     else:
-        confirmQuestion = input(f'{text} (yes/no) ')
+        confirmQuestion = input(f'{text}')
         if confirmQuestion == 'yes':
             return simplePlay(left)
         elif confirmQuestion == 'no':
@@ -186,29 +167,10 @@ def isLeaf(tree):
     else:
         return False
 
-def playLeaf(tree):
-    '''
-    Confirms if the leaf node is a certain string object.
-
-            Parameters:
-                    tree (list): A list of list of tuples
-                  
-
-            Returns:
-                    True/False (bool): true or false depending on yes or no answer inputted by human
-    '''
-    text, left, right = tree
-    confirmObject = input(f'Is the object {text[0]}? (yes/no) ')
-    if confirmObject == 'yes':
-        return True
-            
-    elif confirmObject == 'no':
-        return False
-
 
 def createRatingTree(movieList):
     
-    text = "Do you want to watch something family friendly (yes/no - no also returns films that don't have a rating)?"
+    text = "Do you want to watch something family friendly? (yes/no - no also returns films that don't have a rating): "
     left, right = splitByRatings(movieList)
     
     firstLayerTree = text, left, right
@@ -216,7 +178,7 @@ def createRatingTree(movieList):
 
 def createTimeTree(firstTree):
     text, left, right = firstTree
-    newQuestion = "Do you want to watch something over 100 minutes (yes/no)?"
+    newQuestion = "Do you want to watch something over 100 minutes? (yes/no): "
     
     leftT, rightT = splitByTime(text)
     
@@ -226,16 +188,13 @@ def createTimeTree(firstTree):
 
 def createReleaseDateTree(secondTree):
     text, left, right = secondTree
-    newQuestion = "Do you want to watch a movie that is over 15 years old (yes/no)?"
+    newQuestion = "Do you want to watch a movie that is over 15 years old? (yes/no): "
     
     leftT, rightT = splitByReleaseDate(left[0])
     leftTree = newQuestion, leftT, rightT
     leftT, rightT = splitByReleaseDate(right[0])
     rightTree = newQuestion, leftT, rightT
 
-
-    
-    
     thirdLayerTree = text, leftTree, rightTree
     return thirdLayerTree
     
@@ -275,30 +234,6 @@ def splitByReleaseDate(movieList):
     right = (rightList, None, None)
     return left, right
 
-
-tree1 = createRatingTree(overallMovieList)
-text, left, right = tree1
-treeL = createTimeTree(left)
-treeR = createTimeTree(right)
-tree2 = tree1[0], createTimeTree(left), createTimeTree(right)
-treeL2 = createReleaseDateTree(treeL)
-treeR2 = createReleaseDateTree(treeR)
-tree3 = text, treeL2, treeR2
-
-treeFile = "savedTree.json"
-saveTree(tree3, treeFile)
-
-numOfQuestions = input("How specific do you want your recommendation to be? Enter 1 to answer 1 question, 2 to answer 2 questions, and 3 to answer 3 questions to narrow down your selection ")
-
-if numOfQuestions == "1":
-    treeToPlay = tree1
-elif numOfQuestions == "2":
-    treeToPlay = tree2
-elif numOfQuestions == "3":
-    treeToPlay = tree3
-
-
-playTree = simplePlay(treeToPlay)
 
 def graphPoster(selectedMovie):
     urllib.request.urlretrieve(selectedMovie['Poster'], 'movie.png')
@@ -429,59 +364,98 @@ def graph3Posters(selectedMovies):
 
     plt.show()
 
+def main():
 
-lengthOfOptions = len(playTree)
-randomOrNo = input(f'Do you want to have a movie chosen at random for you from the {lengthOfOptions} options? Enter "yes" if so, otherwise type anything else: ' )
-if randomOrNo == 'yes':
-    postersOrGraph = input('Would you rather see three random movie posters that fit your criteria or see the details about a specific movie? Enter 1 to see three posters and 2 to see information on a singular movie: ')
-    if postersOrGraph == "1":
-        selectedMovies = random.choices(playTree, k=3)
-        graph3Posters(selectedMovies)
-    elif postersOrGraph == "2": 
-
-        selectedMovie = random.choice(playTree)
-        graphAllMovieDetails(selectedMovie)
-else:
-    dictOfTitles = {}
-    count = 1
+    print('Welcome to the Disney Plus Movie Generator!')
+    print('This program will help you find a great movie from a recent Rotten Tomatoes list of the best Disney Plus offerings')       
+    overallMovieList = open_cache('apiData.csv')
+    if len(overallMovieList) == 0:
+        scrapingData = open_cache('scrapingData.csv')
+        if scrapingData == []:
+            scrapingData = rottenTomatoScrape()
+            scrapingCSVWriter(scrapingData)
+        overallMovieList = getAPIData(scrapingData)
+        apiCSVWriter(overallMovieList)
     
-    for movie in playTree:
+    tree1 = createRatingTree(overallMovieList)
+    text, left, right = tree1
+    treeL = createTimeTree(left)
+    treeR = createTimeTree(right)
+    tree2 = tree1[0], createTimeTree(left), createTimeTree(right)
+    treeL2 = createReleaseDateTree(treeL)
+    treeR2 = createReleaseDateTree(treeR)
+    tree3 = text, treeL2, treeR2
 
-        dictOfTitles[count] = (movie['Title'])
-        count += 1
-    print('The movies that fit your criteria are:')
-    print(dictOfTitles)
-    movieNum = input("Select the number of the movie you want to see more information on (if an eligible number is not selected, a movie will be chosen at random for you): ")
-    outputOption = input("Do you want to see 1. Only the movie poster? 2. Only the movie rating? 3. Only the movie plot and critic review? 4. A prompt to the command line with all of the information about the movie 5. A combination display of the graph of ratings, poster, and plot/critic consensus Enter the number of the option you want (if anything else is entered, the poster, graph of ratings, and description will be displayed): ")
+    treeFile = "savedTree.json"
+    saveTree(tree3, treeFile)
+    numOfQuestions = input("How specific do you want your recommendation to be? Enter '1' to answer 1 question, '2' to answer 2 questions, and '3' to answer 3 questions to narrow down your selection: ")
 
-    if int(movieNum) in dictOfTitles.keys():
-        movieNum = int(movieNum) - 1
+    if numOfQuestions == "1":
+        treeToPlay = tree1
+    elif numOfQuestions == "2":
+        treeToPlay = tree2
+    elif numOfQuestions == "3":
+        treeToPlay = tree3
     else:
-        movieNum = random.choice(range(0, lengthOfOptions-1))
-    
-    if outputOption == '1':
-        graphPoster(playTree[movieNum])
+        treeToPlay = tree3
 
-    elif outputOption == '2':
-        graphMovieRatings(playTree[movieNum])
 
-    elif outputOption == '3':
-        graphBoxDescription(playTree[movieNum])
+    playTree = simplePlay(treeToPlay)
 
-    elif outputOption == '4':
-        print(playTree[movieNum])
+    lengthOfOptions = len(playTree)
+    randomOrNo = input(f'Do you want to have a movie chosen at random for you from the {lengthOfOptions} options? Enter "yes" if so, otherwise type anything else: ' )
+    if randomOrNo == 'yes':
+        postersOrGraph = input('Would you rather see three random movie posters that fit your criteria or see the details about a specific movie? Enter 1 to see three posters and 2 to see information on a singular movie: ')
+        if postersOrGraph == "1":
+            selectedMovies = random.choices(playTree, k=3)
+            graph3Posters(selectedMovies)
+        elif postersOrGraph == "2": 
+
+            selectedMovie = random.choice(playTree)
+            graphAllMovieDetails(selectedMovie)
+        else:
+            print("You entered something other than 1 or 2, however, you get a random choice anyways. Enjoy!")
+            selectedMovie = random.choice(playTree)
+            graphAllMovieDetails(selectedMovie)
     else:
-        graphAllMovieDetails(playTree[movieNum])
+        dictOfTitles = {}
+        count = 1
+        
+        for movie in playTree:
+
+            dictOfTitles[count] = (movie['Title'])
+            count += 1
+        print('The movies that fit your criteria are:')
+        print(dictOfTitles)
+        doneLooking = False
+        while doneLooking == False:
+            movieNum = input("Select the number of the movie you want to see more information on (if an eligible number is not selected, a movie will be chosen at random for you): ")
+            outputOption = input("Do you want to see 1. Only the movie poster? 2. Only the movie rating? 3. Only the movie plot and critic review? 4. A prompt to the command line with all of the information about the movie 5. A combination display of the graph of ratings, poster, and plot/critic consensus Enter the number of the option you want (if anything else is entered, the poster, graph of ratings, and description will be displayed): ")
+
+            if int(movieNum) in dictOfTitles.keys():
+                movieNum = int(movieNum) - 1
+            else:
+                movieNum = random.choice(range(0, lengthOfOptions-1))
+            
+            if outputOption == '1':
+                graphPoster(playTree[movieNum])
+
+            elif outputOption == '2':
+                graphMovieRatings(playTree[movieNum])
+
+            elif outputOption == '3':
+                graphBoxDescription(playTree[movieNum])
+
+            elif outputOption == '4':
+                print(playTree[movieNum])
+            else:
+                graphAllMovieDetails(playTree[movieNum])
+            notFinished = input("Do you want to see information about another movie? Enter yes if so. Entering anything else will end the program. ")
+            if notFinished != "yes":
+                doneLooking = True
+    print("Enjoy the movie!")
+
+if __name__ == "__main__":
+    main()
     
 
-# need to do: put everything into a main fuction (if name == __main__: main()), 
-# find the spots where you would get fucked over if you inputted the wrong thing
-# add while loop for checking the movies that were manually chosen out??? Like oh i want to look at the info for a different one
-
-
-
-
-
-
-
-## idea: make a class that stores values per movie and has the functions that split the lists
