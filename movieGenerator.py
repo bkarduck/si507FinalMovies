@@ -574,7 +574,7 @@ def main():
         doneLooking = False
         while doneLooking == False:
             movieNum = input("Select the number of the movie you want to see more information on (if an eligible number is not selected, a movie will be chosen at random for you): ")
-            outputOption = input("Do you want to see 1. Only the movie poster? 2. Only the movie rating? 3. Only the movie plot and critic review? 4. A prompt to the command line with all of the information about the movie 5. A combination display of the graph of ratings, poster, and plot/critic consensus Enter the number of the option you want (if anything else is entered, the poster, graph of ratings, and description will be displayed): ")
+            outputOption = input("Do you want to see 1. Only the movie poster? 2. Only the movie ratings? 3. Only the movie plot and critic review? 4. A prompt to the command line with all of the information about the movie 5. A combination display of the graph of ratings, poster, and plot/critic consensus \nEnter the number of the option you want (if anything else is entered, the poster, graph of ratings, and description will be displayed): ")
 
             if int(movieNum) in dictOfTitles.keys():
                 movieNum = int(movieNum) - 1
