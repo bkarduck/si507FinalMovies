@@ -128,9 +128,9 @@ def apiCSVWriter(overallMovie):
     f.close()
 
 def open_cache(filename):
-    ''' opens the cache file if it exists and loads the JSON into
-    a dictionary, which it then returns.
-    if the cache file doesn't exist, creates a new cache dictionary
+    ''' opens the cache file if it exists and loads the CSV file into
+    a list of movies, which it then returns.
+    if the cache file doesn't exist, creates a new cache list
     Parameters
     ----------
     None
