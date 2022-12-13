@@ -11,6 +11,16 @@ url = "https://editorial.rottentomatoes.com/guide/best-disney-movies-to-watch-no
 resp = requests.get(url)
 
 def rottenTomatoScrape():
+    ''' Scrapes the Rotten Tomatoes website for the best Disney movies
+    to watch, cleans the data, and appends information about each movie
+    to a list of movies. 
+    Parameters
+    ----------
+    None
+    Returns
+    -------
+    The list of dictionaries of movies generated from the parsing
+    '''
     movieList = []
     if resp.ok:
         soup = BeautifulSoup(resp.content, 'html.parser')
@@ -34,7 +44,16 @@ def rottenTomatoScrape():
     return movieList
 
 
-def scrapingCSVWriter( movieList):
+def scrapingCSVWriter(movieList):
+    ''' opens the scrapingData CSV file and writes the movies from 
+    the Rotten Tomatoes movie list into the CSV
+    Parameters
+    ----------
+    None
+    Returns
+    -------
+    None
+    '''
     with open('scrapingData.csv', 'w', newline='') as f:
         w = csv.DictWriter(f,['Title','Release Year','criticConsensus','Rank','Director'])
         w.writeheader()
@@ -47,6 +66,16 @@ baseurl = "http://www.omdbapi.com/"
 overallMovie = []
 
 def getAPIData(movieList):
+    ''' Takes the movies from the Rotten Tomatoes scraped list and calls the 
+    OMDB API on each title. Then, it cleans the data and organizes it for use
+    in a tree by appending information about each movie to a list of movies. 
+    Parameters
+    ----------
+    None
+    Returns
+    -------
+    The list of dictionaries of movies generated from the parsing
+    '''
     for movie in movieList:
         movieInfoDict = {}
         parameter_dictionary = {'t': movie['Title'],'plot': 'full', 'apikey': "5828b360"}
@@ -82,6 +111,15 @@ def getAPIData(movieList):
     
 
 def apiCSVWriter(overallMovie):
+    ''' opens the apiData CSV file and writes the movies from 
+    the API Data overall movie list into the CSV file
+    Parameters
+    ----------
+    None
+    Returns
+    -------
+    None
+    '''
     with open('apiData.csv', 'w', newline='') as f:
         w = csv.DictWriter(f,['Title','Year', 'Rated','Runtime','Genre','Director','Plot','rottenTomatoes','imdbRating','Metascore', 'BoxOffice', 'imdbVotes','criticConsensus','Rank', 'Poster'])
         w.writeheader()
@@ -132,8 +170,6 @@ def simplePlay(tree):
 
             Parameters:
                     tree (list): A list of list of tuples
-                  
-
             Returns:
                     playLeaf(tree) (bool): true or false depending on yes or no answer
                     simplePlay(left/right): recursively calls simplePlay depending on yes or no answer
@@ -169,6 +205,16 @@ def isLeaf(tree):
 
 
 def createRatingTree(movieList):
+
+    '''
+    Creates a tree based on the film's ratings
+
+            Parameters:
+                    movieList (list): A list of dictionaries of the movies
+            Returns:
+                    firstLayerTree (list): a tree of the data after being split up
+                    
+    '''
     
     text = "Do you want to watch something family friendly? (yes/no - no also returns films that don't have a rating): "
     left, right = splitByRatings(movieList)
@@ -177,6 +223,15 @@ def createRatingTree(movieList):
     return firstLayerTree
 
 def createTimeTree(firstTree):
+    '''
+    Creates a tree based on the film's length
+
+            Parameters:
+                    firstTree (list): A list of list of tuples
+            Returns:
+                    secondLayerTree (list): a tree of the data after being split up by movie length
+                    
+    '''
     text, left, right = firstTree
     newQuestion = "Do you want to watch something over 100 minutes? (yes/no): "
     
@@ -187,6 +242,15 @@ def createTimeTree(firstTree):
     return secondLayerTree
 
 def createReleaseDateTree(secondTree):
+    '''
+    Creates a tree based on the film's release date
+
+            Parameters:
+                    secondTree (list): A list of list of tuples
+            Returns:
+                    thirdLayerTree (list): a tree of the data after being split up by the release date
+                    
+    '''
     text, left, right = secondTree
     newQuestion = "Do you want to watch a movie that is over 15 years old? (yes/no): "
     
@@ -199,6 +263,17 @@ def createReleaseDateTree(secondTree):
     return thirdLayerTree
     
 def splitByRatings(movieList):
+    ''' Splits the movies in a given movie list based on ratings
+    Parameters
+    ----------
+    movieList: list of dictionaries
+        The list of movies to parse through and split up
+    Returns
+    -------
+    left, right: tuples
+        Left and right tree leaves that have been sorted appropriately
+    '''
+    
     leftList = []
     rightList = []
     for movie in movieList:
@@ -211,6 +286,16 @@ def splitByRatings(movieList):
     return left, right
 
 def splitByTime(movieList):
+    ''' Splits the movies in a given movie list based on movie length
+    Parameters
+    ----------
+    movieList: list of dictionaries
+        The list of movies to parse through and split up
+    Returns
+    -------
+    left, right: tuples
+        Left and right tree leaves that have been sorted appropriately
+    '''
     leftList = []
     rightList = []
     for movie in movieList:
@@ -223,6 +308,16 @@ def splitByTime(movieList):
     return left, right
 
 def splitByReleaseDate(movieList):
+    ''' Splits the movies in a given movie list based on movie release date
+    Parameters
+    ----------
+    movieList: list of dictionaries
+        The list of movies to parse through and split up
+    Returns
+    -------
+    left, right: tuples
+        Left and right tree leaves that have been sorted appropriately
+    '''
     leftList = []
     rightList = []
     for movie in movieList:
@@ -236,6 +331,15 @@ def splitByReleaseDate(movieList):
 
 
 def graphPoster(selectedMovie):
+    ''' graphs the given movie poster
+    Parameters
+    ----------
+    selectedMovie: dict
+        The dictionary for the movie to generate the poster from
+    Returns
+    -------
+    None
+    '''
     urllib.request.urlretrieve(selectedMovie['Poster'], 'movie.png')
   
     img = Image.open("movie.png")
@@ -250,6 +354,17 @@ def graphPoster(selectedMovie):
     plt.show()
 
 def graphMovieRatings(selectedMovie):
+
+    ''' graphs the given movie ratings (Rotten Tomatoes, IMDB, Metascore, 
+    and an average of the three scores)
+    Parameters
+    ----------
+    selectedMovie: dict
+        The dictionary for the movie to generate the graph from
+    Returns
+    -------
+    None
+    '''
 
     if '%' in selectedMovie["rottenTomatoes"]:
         rottenTom = float(selectedMovie["rottenTomatoes"].split('%')[0])
@@ -275,6 +390,15 @@ def graphMovieRatings(selectedMovie):
     plt.show()
 
 def graphBoxDescription(selectedMovie):
+    ''' Displays the plot and critic review of the given movie 
+    Parameters
+    ----------
+    tree: dict
+        The dictionary for the movie to generate the information from
+    Returns
+    -------
+    None
+    '''
     f, a0 = plt.subplots(1, 1)
     plt.suptitle(f'Your movie is: {selectedMovie["Title"]}', y=.96, weight='bold')
     f.set_figheight(6)
@@ -287,6 +411,17 @@ def graphBoxDescription(selectedMovie):
     plt.show()
    
 def graphAllMovieDetails(selectedMovie):
+    ''' Displays the graph of the given movie's ratings (Rotten Tomatoes, IMDB, Metascore, 
+    and an average of the three scores), the movie poster, and the 
+    plot and critic review of the given movie 
+    Parameters
+    ----------
+    tree: dict
+        The dictionary for the movie to generate the information from
+    Returns
+    -------
+    None
+    '''
     urllib.request.urlretrieve(selectedMovie['Poster'], 'movie.png')
   
     img = Image.open("movie.png")
@@ -331,6 +466,15 @@ def graphAllMovieDetails(selectedMovie):
     plt.show()
 
 def graph3Posters(selectedMovies):
+    ''' graphs the movie posters for the three selected movies
+    Parameters
+    ----------
+    selectedMovies: list of dictionaries
+        The list of dictionaries of the movies to generate the posters from
+    Returns
+    -------
+    None
+    '''
     count = 1
     for movie in selectedMovies:
         urllib.request.urlretrieve(movie['Poster'], f'movie{count}.png')
